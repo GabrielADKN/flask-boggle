@@ -144,10 +144,10 @@ class Boggle():
 
         return False
 
-# new = Boggle()
-# board = new.make_board()    
-# word = "E"
-# response = new.check_valid_word(board, word)
+new = Boggle()
+board = new.make_board()    
+word = "TEST"
+response = new.check_valid_word(board, word)
 
-# print(board)
-# print(response)
+print(board)
+print(response)
