@@ -1,55 +1,39 @@
-from unittest import TestCase
+import unittest
 from app import app
 from flask import session
-from boggle import Boggle
 
-
-class FlaskTests(TestCase):
-
+class FlaskBoggleTestCase(unittest.TestCase):
     def setUp(self):
         self.client = app.test_client()
         app.config['TESTING'] = True
 
-    def test_homepage(self):
+    def test_index_route(self):
+        """Test index route."""
         with self.client:
             response = self.client.get('/')
             self.assertEqual(response.status_code, 200)
-            self.assertIn(b'Boggle Game', response.data)
+            self.assertIn(b'board', response.data)
+            self.assertIsNone(session.get('highscore'))
+            self.assertIsNone(session.get('nplays'))
 
-    def test_start_game(self):
-        with self.client:
-            response = self.client.get('/')
-            self.assertEqual(response.status_code, 200)
-            self.assertIn(b'board', session)
-
-    def test_guess_word(self):
+    def test_check_word_route(self):
+        """Test check-word route."""
         with self.client:
             with self.client.session_transaction() as sess:
-                sess['board'] = [['A', 'B', 'C', 'D', 'E'],
-                                 ['F', 'G', 'H', 'I', 'J'],
-                                 ['K', 'L', 'M', 'N', 'O'],
-                                 ['P', 'Q', 'R', 'S', 'T'],
-                                 ['U', 'V', 'W', 'X', 'Y']]
-            response = self.client.post('/guess', data={'word': 'DOG'})
+                sess['board'] = [['A', 'B', 'C', 'D'], ['E', 'F', 'G', 'H'], ['I', 'J', 'K', 'L'], ['M', 'N', 'O', 'P']]
+            response = self.client.get('/check-word?word=ABC')
             self.assertEqual(response.status_code, 200)
-            self.assertIn(b'result', session)
-            self.assertIn(b'word', session['result'])
-            self.assertIn(b'score', session['result'])
+            self.assertEqual(response.json['result'], 'not-word')
 
-    def test_invalid_word(self):
+    def test_score_route(self):
+        """Test score route."""
         with self.client:
             with self.client.session_transaction() as sess:
-                sess['board'] = [['A', 'B', 'C', 'D', 'E'],
-                                 ['F', 'G', 'H', 'I', 'J'],
-                                 ['K', 'L', 'M', 'N', 'O'],
-                                 ['P', 'Q', 'R', 'S', 'T'],
-                                 ['U', 'V', 'W', 'X', 'Y']]
-            response = self.client.post('/guess', data={'word': 'INVALID'})
+                sess['highscore'] = 10
+                sess['nplays'] = 5
+            response = self.client.post('/score', json={'score': 15})
             self.assertEqual(response.status_code, 200)
-            self.assertIn(b'result', session)
-            self.assertIn(b'word', session['result'])
-            self.assertIn(b'score', session['result'])
-            self.assertEqual(session['result']['score'], 0)
+            self.assertEqual(response.json['brokeRecord'], True)
 
 if __name__ == '__main__':
     unittest.main()
